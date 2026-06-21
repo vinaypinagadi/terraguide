@@ -10,25 +10,27 @@ import HabitTracker from '../components/HabitTracker';
 import ScenarioModel from '../components/ScenarioModel';
 import Settings from '../components/Settings';
 import PrintReport from '../components/PrintReport';
+import ToastContainer from '../components/Toast';
 import { Leaf, LayoutDashboard, Calculator as CalcIcon, Lightbulb, CheckSquare, BarChart3, Settings as SettingsIcon, Printer, ShieldCheck } from 'lucide-react';
 
 export default function Home() {
   const { hasCalculated, streakCount, checkStreak } = useCarbonStore();
   const [mounted, setMounted] = useState(false);
-  const [activeTab, setActiveTab] = useState<string>('dashboard');
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    // Read directly from Zustand store state on initial load
+    const state = useCarbonStore.getState();
+    return state.hasCalculated ? 'dashboard' : 'calculator';
+  });
 
   // Trigger streak check on load
   useEffect(() => {
-    setMounted(true);
     checkStreak();
-    
-    // Set initial tab based on whether footprint is calculated
-    if (!hasCalculated) {
-      setActiveTab('calculator');
-    } else {
-      setActiveTab('dashboard');
-    }
-  }, [hasCalculated, checkStreak]);
+
+    const frame = requestAnimationFrame(() => {
+      setMounted(true);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [checkStreak]);
 
   // Loading state during hydration to prevent SSR flashing
   if (!mounted) {
@@ -78,6 +80,9 @@ export default function Home() {
       {/* Printable Report Overlay (Hidden in screen media, only renders when printing) */}
       <PrintReport />
 
+      {/* Custom Toast Alerts */}
+      <ToastContainer />
+
       {/* Screen Interface */}
       <div className="flex-1 flex flex-col no-print bg-background text-foreground">
         
@@ -105,7 +110,8 @@ export default function Home() {
               {hasCalculated && (
                 <button
                   onClick={handlePrint}
-                  className="p-2 border border-border text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 rounded-xl cursor-pointer transition-all flex items-center gap-1.5 text-xs font-semibold"
+                  aria-label="Export Report PDF"
+                  className="p-2 border border-border text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 rounded-xl cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none transition-all flex items-center gap-1.5 text-xs font-semibold"
                   title="Export Report PDF"
                 >
                   <Printer className="w-4.5 h-4.5" /> <span className="hidden sm:inline">Export PDF</span>
@@ -121,7 +127,7 @@ export default function Home() {
           
           {/* Side Sidebar Navigation (Desktop) */}
           <aside className="hidden md:block w-52 shrink-0 self-start">
-            <nav className="bg-card border border-border rounded-2xl p-3.5 space-y-1.5 shadow-sm">
+            <nav className="bg-card border border-border rounded-2xl p-3.5 space-y-1.5 shadow-sm" role="tablist" aria-label="Desktop navigation">
               <span className="px-2.5 text-[9px] font-bold uppercase tracking-widest text-muted-foreground block mb-2.5">
                 Navigator
               </span>
@@ -129,7 +135,9 @@ export default function Home() {
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-3 cursor-pointer transition-all ${
+                  role="tab"
+                  aria-selected={activeTab === item.id}
+                  className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-3 cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none transition-all ${
                     activeTab === item.id
                       ? 'bg-emerald-600 text-white font-extrabold shadow-md shadow-emerald-600/10'
                       : 'text-muted-foreground hover:text-foreground hover:bg-emerald-50/25 dark:hover:bg-emerald-950/5'
@@ -153,14 +161,17 @@ export default function Home() {
         </div>
 
         {/* Mobile Navigation Bar (Fixed Bottom) */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/90 backdrop-blur-lg border-t border-border px-4 py-2 shadow-lg flex justify-around">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/90 backdrop-blur-lg border-t border-border px-4 py-2 shadow-lg flex justify-around" role="tablist" aria-label="Mobile navigation">
           {navItems.filter(item => item.visible).map((item) => {
             const isActive = activeTab === item.id;
             return (
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`flex flex-col items-center justify-center p-1 cursor-pointer transition-all relative ${
+                role="tab"
+                aria-selected={isActive}
+                aria-label={item.label}
+                className={`flex flex-col items-center justify-center p-1 cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none transition-all relative ${
                   isActive ? 'text-emerald-600 dark:text-emerald-400 font-bold scale-105' : 'text-muted-foreground'
                 }`}
               >

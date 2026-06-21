@@ -3,14 +3,103 @@ import { useCarbonStore, CarbonInputs } from '../store/useCarbonStore';
 import { Home, Car, Utensils, ShoppingBag, ArrowRight, ArrowLeft, Leaf, Plus, Minus } from 'lucide-react';
 import Preloader from './Preloader';
 
+interface NumberInputProps {
+  label: string;
+  sublabel?: string;
+  value: number;
+  unit: string;
+  min: number;
+  max: number;
+  step?: number;
+  onChange: (val: number) => void;
+}
+
+function NumberInput({ label, sublabel, value, unit, min, max, step = 1, onChange }: NumberInputProps) {
+  return (
+    <div className="space-y-2">
+      <div className="flex justify-between">
+        <label className="text-sm font-medium text-emerald-900 dark:text-emerald-100">{label}</label>
+        <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+          {value.toLocaleString()} {unit}
+        </span>
+      </div>
+      {sublabel && <p className="text-xs text-muted-foreground">{sublabel}</p>}
+      <div className="flex items-center gap-4">
+        <button
+          type="button"
+          onClick={() => onChange(Math.max(min, value - step))}
+          aria-label={`Decrease ${label}`}
+          className="p-2 border border-border rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none cursor-pointer"
+        >
+          <Minus className="w-4 h-4" />
+        </button>
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={(e) => onChange(parseInt(e.target.value) || 0)}
+          aria-label={label}
+          className="flex-1 accent-emerald-500 h-1.5 bg-border rounded-lg appearance-none cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
+        />
+        <button
+          type="button"
+          onClick={() => onChange(Math.min(max, value + step))}
+          aria-label={`Increase ${label}`}
+          className="p-2 border border-border rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none cursor-pointer"
+        >
+          <Plus className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+interface CounterInputProps {
+  label: string;
+  sublabel?: string;
+  value: number;
+  onChange: (val: number) => void;
+  min?: number;
+}
+
+function CounterInput({ label, sublabel, value, onChange, min = 0 }: CounterInputProps) {
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-medium text-emerald-900 dark:text-emerald-100">{label}</label>
+      {sublabel && <p className="text-xs text-muted-foreground">{sublabel}</p>}
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => onChange(Math.max(min, value - 1))}
+          aria-label={`Decrease ${label}`}
+          className="p-2 border border-border rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none cursor-pointer"
+        >
+          <Minus className="w-4 h-4" />
+        </button>
+        <span className="w-12 text-center font-bold text-emerald-950 dark:text-emerald-50" aria-live="polite">
+          {value}
+        </span>
+        <button
+          type="button"
+          onClick={() => onChange(value + 1)}
+          aria-label={`Increase ${label}`}
+          className="p-2 border border-border rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none cursor-pointer"
+        >
+          <Plus className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function Calculator() {
   const { inputs, setInputs, setHasCalculated } = useCarbonStore();
   const [step, setStep] = useState(1);
   const [calculating, setCalculating] = useState(false);
 
-  // Local state to store intermediate edits before applying/submitting if wanted,
-  // but direct binding to store inputs is very dynamic and responsive!
-  const handleChange = (key: keyof CarbonInputs, value: any) => {
+  const handleChange = <K extends keyof CarbonInputs>(key: K, value: CarbonInputs[K]) => {
     setInputs({ [key]: value });
   };
 
@@ -30,16 +119,6 @@ export default function Calculator() {
       setCalculating(false);
       setHasCalculated(true);
     }, 1800);
-  };
-
-  const increment = (key: keyof CarbonInputs, stepVal: number = 1, max: number = 99999) => {
-    const val = Number(inputs[key]) || 0;
-    handleChange(key, Math.min(max, val + stepVal));
-  };
-
-  const decrement = (key: keyof CarbonInputs, stepVal: number = 1, min: number = 0) => {
-    const val = Number(inputs[key]) || 0;
-    handleChange(key, Math.max(min, val - stepVal));
   };
 
   return (
@@ -92,71 +171,27 @@ export default function Calculator() {
             </div>
 
             {/* Household Size */}
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <label className="text-sm font-medium text-emerald-900 dark:text-emerald-100">Household Size</label>
-                <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{inputs.householdSize} {inputs.householdSize === 1 ? 'person' : 'people'}</span>
-              </div>
-              <p className="text-xs text-muted-foreground">Emissions from shared utilities are split among housemates.</p>
-              <div className="flex items-center gap-4">
-                <button
-                  type="button"
-                  onClick={() => decrement('householdSize', 1, 1)}
-                  className="p-2 border border-border rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300"
-                >
-                  <Minus className="w-4 h-4" />
-                </button>
-                <input
-                  type="range"
-                  min="1"
-                  max="8"
-                  value={inputs.householdSize}
-                  onChange={(e) => handleChange('householdSize', parseInt(e.target.value))}
-                  className="flex-1 accent-emerald-500 h-1.5 bg-border rounded-lg appearance-none cursor-pointer"
-                />
-                <button
-                  type="button"
-                  onClick={() => increment('householdSize', 1, 8)}
-                  className="p-2 border border-border rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+            <NumberInput
+              label="Household Size"
+              sublabel="Emissions from shared utilities are split among housemates."
+              value={inputs.householdSize}
+              unit={inputs.householdSize === 1 ? 'person' : 'people'}
+              min={1}
+              max={8}
+              onChange={(val) => handleChange('householdSize', val)}
+            />
 
             {/* Electricity Usage */}
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <label className="text-sm font-medium text-emerald-900 dark:text-emerald-100">Monthly Electricity</label>
-                <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{inputs.electricityBill} kWh/month</span>
-              </div>
-              <p className="text-xs text-muted-foreground">Average household is ~250-400 kWh/month depending on size.</p>
-              <div className="flex items-center gap-4">
-                <button
-                  type="button"
-                  onClick={() => decrement('electricityBill', 50, 0)}
-                  className="p-2 border border-border rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300"
-                >
-                  <Minus className="w-4 h-4" />
-                </button>
-                <input
-                  type="range"
-                  min="0"
-                  max="1200"
-                  step="50"
-                  value={inputs.electricityBill}
-                  onChange={(e) => handleChange('electricityBill', parseInt(e.target.value))}
-                  className="flex-1 accent-emerald-500 h-1.5 bg-border rounded-lg appearance-none cursor-pointer"
-                />
-                <button
-                  type="button"
-                  onClick={() => increment('electricityBill', 50, 1200)}
-                  className="p-2 border border-border rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+            <NumberInput
+              label="Monthly Electricity"
+              sublabel="Average household is ~250-400 kWh/month depending on size."
+              value={inputs.electricityBill}
+              unit="kWh/month"
+              min={0}
+              max={1200}
+              step={50}
+              onChange={(val) => handleChange('electricityBill', val)}
+            />
 
             {/* Heating Source */}
             <div className="space-y-3">
@@ -167,9 +202,9 @@ export default function Calculator() {
                     key={source}
                     type="button"
                     onClick={() => handleChange('heatingSource', source)}
-                    className={`p-3 text-center rounded-xl border text-sm capitalize font-medium transition-all ${
+                    className={`p-3 text-center rounded-xl border text-sm capitalize font-semibold focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none transition-all cursor-pointer ${
                       inputs.heatingSource === source
-                        ? 'border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold shadow-sm'
+                        ? 'border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-sm'
                         : 'border-border hover:bg-emerald-50/20 dark:hover:bg-emerald-950/5 text-muted-foreground'
                     }`}
                   >
@@ -181,37 +216,15 @@ export default function Calculator() {
 
             {/* Heating Amount */}
             {inputs.heatingSource !== 'none' && (
-              <div className="space-y-2 animate-fade-in">
-                <div className="flex justify-between">
-                  <label className="text-sm font-medium text-emerald-900 dark:text-emerald-100">Monthly Heating Bill/Use</label>
-                  <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{inputs.heatingAmount} kWh/month</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <button
-                    type="button"
-                    onClick={() => decrement('heatingAmount', 25, 0)}
-                    className="p-2 border border-border rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300"
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
-                  <input
-                    type="range"
-                    min="0"
-                    max="600"
-                    step="25"
-                    value={inputs.heatingAmount}
-                    onChange={(e) => handleChange('heatingAmount', parseInt(e.target.value))}
-                    className="flex-1 accent-emerald-500 h-1.5 bg-border rounded-lg appearance-none cursor-pointer"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => increment('heatingAmount', 25, 600)}
-                    className="p-2 border border-border rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
+              <NumberInput
+                label="Monthly Heating Bill/Use"
+                value={inputs.heatingAmount}
+                unit="kWh/month"
+                min={0}
+                max={600}
+                step={25}
+                onChange={(val) => handleChange('heatingAmount', val)}
+              />
             )}
           </div>
         )}
@@ -238,9 +251,9 @@ export default function Calculator() {
                     key={fuel}
                     type="button"
                     onClick={() => handleChange('carType', fuel)}
-                    className={`p-3 text-center rounded-xl border text-xs capitalize font-medium transition-all ${
+                    className={`p-3 text-center rounded-xl border text-xs capitalize font-semibold focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none transition-all cursor-pointer ${
                       inputs.carType === fuel
-                        ? 'border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold shadow-sm'
+                        ? 'border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-sm'
                         : 'border-border hover:bg-emerald-50/20 dark:hover:bg-emerald-950/5 text-muted-foreground'
                     }`}
                   >
@@ -250,119 +263,45 @@ export default function Calculator() {
               </div>
             </div>
 
-            {/* Annual Mileage */}
+            {/* Annual Driving Mileage */}
             {inputs.carType !== 'none' && (
-              <div className="space-y-2 animate-fade-in">
-                <div className="flex justify-between">
-                  <label className="text-sm font-medium text-emerald-900 dark:text-emerald-100">Annual Driving Mileage</label>
-                  <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{inputs.annualMileage.toLocaleString()} miles/year</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <button
-                    type="button"
-                    onClick={() => decrement('annualMileage', 500, 0)}
-                    className="p-2 border border-border rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300"
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
-                  <input
-                    type="range"
-                    min="0"
-                    max="30000"
-                    step="500"
-                    value={inputs.annualMileage}
-                    onChange={(e) => handleChange('annualMileage', parseInt(e.target.value))}
-                    className="flex-1 accent-emerald-500 h-1.5 bg-border rounded-lg appearance-none cursor-pointer"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => increment('annualMileage', 500, 30000)}
-                    className="p-2 border border-border rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
+              <NumberInput
+                label="Annual Driving Mileage"
+                value={inputs.annualMileage}
+                unit="miles/year"
+                min={0}
+                max={30000}
+                step={500}
+                onChange={(val) => handleChange('annualMileage', val)}
+              />
             )}
 
-            {/* Public Transport */}
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <label className="text-sm font-medium text-emerald-900 dark:text-emerald-100">Public Transit Commute</label>
-                <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{inputs.publicTransportHours} hours/week</span>
-              </div>
-              <p className="text-xs text-muted-foreground">Buses, subways, and trains commuter hours.</p>
-              <div className="flex items-center gap-4">
-                <button
-                  type="button"
-                  onClick={() => decrement('publicTransportHours', 1, 0)}
-                  className="p-2 border border-border rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300"
-                >
-                  <Minus className="w-4 h-4" />
-                </button>
-                <input
-                  type="range"
-                  min="0"
-                  max="40"
-                  value={inputs.publicTransportHours}
-                  onChange={(e) => handleChange('publicTransportHours', parseInt(e.target.value))}
-                  className="flex-1 accent-emerald-500 h-1.5 bg-border rounded-lg appearance-none cursor-pointer"
-                />
-                <button
-                  type="button"
-                  onClick={() => increment('publicTransportHours', 1, 40)}
-                  className="p-2 border border-border rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+            {/* Public Transit Commute */}
+            <NumberInput
+              label="Public Transit Commute"
+              sublabel="Buses, subways, and trains commuter hours."
+              value={inputs.publicTransportHours}
+              unit="hours/week"
+              min={0}
+              max={40}
+              onChange={(val) => handleChange('publicTransportHours', val)}
+            />
 
             {/* Flights */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-emerald-900 dark:text-emerald-100">Short Flights (&lt; 3 hrs)</label>
-                <p className="text-xs text-muted-foreground">Domestic or short regional flights per year.</p>
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => decrement('shortFlights', 1, 0)}
-                    className="p-2 border border-border rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300"
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
-                  <span className="w-12 text-center font-bold text-emerald-950 dark:text-emerald-50">{inputs.shortFlights}</span>
-                  <button
-                    type="button"
-                    onClick={() => increment('shortFlights', 1, 50)}
-                    className="p-2 border border-border rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
+              <CounterInput
+                label="Short Flights (< 3 hrs)"
+                sublabel="Domestic or short regional flights per year."
+                value={inputs.shortFlights}
+                onChange={(val) => handleChange('shortFlights', val)}
+              />
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-emerald-900 dark:text-emerald-100">Long Flights (&gt; 3 hrs)</label>
-                <p className="text-xs text-muted-foreground">Transcontinental or international flights per year.</p>
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => decrement('longFlights', 1, 0)}
-                    className="p-2 border border-border rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300"
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
-                  <span className="w-12 text-center font-bold text-emerald-950 dark:text-emerald-50">{inputs.longFlights}</span>
-                  <button
-                    type="button"
-                    onClick={() => increment('longFlights', 1, 30)}
-                    className="p-2 border border-border rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
+              <CounterInput
+                label="Long Flights (> 3 hrs)"
+                sublabel="Transcontinental or international flights per year."
+                value={inputs.longFlights}
+                onChange={(val) => handleChange('longFlights', val)}
+              />
             </div>
           </div>
         )}
@@ -395,9 +334,9 @@ export default function Calculator() {
                     key={diet.key}
                     type="button"
                     onClick={() => handleChange('dietType', diet.key)}
-                    className={`p-3 text-center rounded-xl border flex flex-col items-center justify-center transition-all ${
+                    className={`p-3 text-center rounded-xl border flex flex-col items-center justify-center focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none transition-all cursor-pointer ${
                       inputs.dietType === diet.key
-                        ? 'border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold shadow-sm'
+                        ? 'border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-sm'
                         : 'border-border hover:bg-emerald-50/20 dark:hover:bg-emerald-950/5 text-muted-foreground'
                     }`}
                   >
@@ -418,9 +357,9 @@ export default function Calculator() {
                     key={waste}
                     type="button"
                     onClick={() => handleChange('foodWaste', waste)}
-                    className={`p-3 text-center rounded-xl border text-sm capitalize font-medium transition-all ${
+                    className={`p-3 text-center rounded-xl border text-sm capitalize font-semibold focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none transition-all cursor-pointer ${
                       inputs.foodWaste === waste
-                        ? 'border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold shadow-sm'
+                        ? 'border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-sm'
                         : 'border-border hover:bg-emerald-50/20 dark:hover:bg-emerald-950/5 text-muted-foreground'
                     }`}
                   >
@@ -430,39 +369,17 @@ export default function Calculator() {
               </div>
             </div>
 
-            {/* Local Food Ratio */}
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <label className="text-sm font-medium text-emerald-900 dark:text-emerald-100">Local & Seasonal Food Share</label>
-                <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{inputs.localFoodRatio}% of diet</span>
-              </div>
-              <p className="text-xs text-muted-foreground">Percentage of food sourced locally (reduces transit mileage emissions).</p>
-              <div className="flex items-center gap-4">
-                <button
-                  type="button"
-                  onClick={() => decrement('localFoodRatio', 10, 0)}
-                  className="p-2 border border-border rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300"
-                >
-                  <Minus className="w-4 h-4" />
-                </button>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="5"
-                  value={inputs.localFoodRatio}
-                  onChange={(e) => handleChange('localFoodRatio', parseInt(e.target.value))}
-                  className="flex-1 accent-emerald-500 h-1.5 bg-border rounded-lg appearance-none cursor-pointer"
-                />
-                <button
-                  type="button"
-                  onClick={() => increment('localFoodRatio', 10, 100)}
-                  className="p-2 border border-border rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+            {/* Local & Seasonal Food Share */}
+            <NumberInput
+              label="Local & Seasonal Food Share"
+              sublabel="Percentage of food sourced locally (reduces transit mileage emissions)."
+              value={inputs.localFoodRatio}
+              unit="% of diet"
+              min={0}
+              max={100}
+              step={5}
+              onChange={(val) => handleChange('localFoodRatio', val)}
+            />
           </div>
         )}
 
@@ -479,39 +396,17 @@ export default function Calculator() {
               </div>
             </div>
 
-            {/* Shopping spend */}
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <label className="text-sm font-medium text-emerald-900 dark:text-emerald-100">Monthly Shopping Budget</label>
-                <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">${inputs.shoppingSpend}/month</span>
-              </div>
-              <p className="text-xs text-muted-foreground">Non-essential spending (clothes, tech gadgets, furniture).</p>
-              <div className="flex items-center gap-4">
-                <button
-                  type="button"
-                  onClick={() => decrement('shoppingSpend', 25, 0)}
-                  className="p-2 border border-border rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300"
-                >
-                  <Minus className="w-4 h-4" />
-                </button>
-                <input
-                  type="range"
-                  min="0"
-                  max="1500"
-                  step="25"
-                  value={inputs.shoppingSpend}
-                  onChange={(e) => handleChange('shoppingSpend', parseInt(e.target.value))}
-                  className="flex-1 accent-emerald-500 h-1.5 bg-border rounded-lg appearance-none cursor-pointer"
-                />
-                <button
-                  type="button"
-                  onClick={() => increment('shoppingSpend', 25, 1500)}
-                  className="p-2 border border-border rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+            {/* Monthly Shopping Budget */}
+            <NumberInput
+              label="Monthly Shopping Budget"
+              sublabel="Non-essential spending (clothes, tech gadgets, furniture)."
+              value={inputs.shoppingSpend}
+              unit="$/month"
+              min={0}
+              max={1500}
+              step={25}
+              onChange={(val) => handleChange('shoppingSpend', val)}
+            />
 
             {/* Recycling Habits */}
             <div className="space-y-3">
@@ -526,7 +421,7 @@ export default function Calculator() {
                     key={opt.key}
                     type="button"
                     onClick={() => handleChange('recyclingHabits', opt.key)}
-                    className={`p-3 text-left rounded-xl border flex flex-col transition-all ${
+                    className={`p-3 text-left rounded-xl border flex flex-col focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none transition-all cursor-pointer ${
                       inputs.recyclingHabits === opt.key
                         ? 'border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold shadow-sm'
                         : 'border-border hover:bg-emerald-50/20 dark:hover:bg-emerald-950/5 text-muted-foreground'
@@ -547,7 +442,7 @@ export default function Calculator() {
             <button
               type="button"
               onClick={handlePrev}
-              className="px-5 py-2.5 border border-border rounded-xl font-medium text-emerald-800 dark:text-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/25 flex items-center gap-2 cursor-pointer transition-colors"
+              className="px-5 py-2.5 border border-border rounded-xl font-semibold text-emerald-800 dark:text-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/25 flex items-center gap-2 cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none transition-colors"
             >
               <ArrowLeft className="w-4 h-4" /> Back
             </button>
@@ -559,14 +454,14 @@ export default function Calculator() {
             <button
               type="button"
               onClick={handleNext}
-              className="px-5 py-2.5 bg-emerald-600 text-white rounded-xl font-medium hover:bg-emerald-700 flex items-center gap-2 cursor-pointer transition-colors"
+              className="px-5 py-2.5 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 flex items-center gap-2 cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none transition-colors"
             >
               Next <ArrowRight className="w-4 h-4" />
             </button>
           ) : (
             <button
               type="submit"
-              className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 flex items-center gap-2 cursor-pointer shadow-md shadow-emerald-600/10 hover:shadow-emerald-700/20 transition-all animate-pulse"
+              className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 flex items-center gap-2 cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none shadow-md shadow-emerald-600/10 hover:shadow-emerald-700/20 transition-all animate-pulse"
             >
               <Leaf className="w-4 h-4" /> Calculate Footprint
             </button>

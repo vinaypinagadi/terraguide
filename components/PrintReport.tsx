@@ -13,7 +13,6 @@ export default function PrintReport() {
   });
 
   const activePlanTips = ALL_RECOMMENDATIONS.filter((rec) => activeRecommendations.includes(rec.id));
-  const completedCount = completedRecommendations.filter((id) => activeRecommendations.includes(id)).length;
   
   return (
     <div className="print-only print-page space-y-8 bg-white text-black p-8 max-w-4xl mx-auto hidden">

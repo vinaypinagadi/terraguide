@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCarbonStore } from '../store/useCarbonStore';
-import { Check, Zap, Award, Flame, Calendar, Info, HelpCircle } from 'lucide-react';
+import { Check, Flame } from 'lucide-react';
 
 interface Habit {
   id: string;
@@ -39,7 +39,7 @@ const ALL_BADGES: Badge[] = [
 ];
 
 export default function HabitTracker() {
-  const { completedHabitsToday, toggleHabitToday, streakCount, badges, habitsHistory } = useCarbonStore();
+  const { completedHabitsToday, toggleHabitToday, streakCount, badges } = useCarbonStore();
 
   const getImpactBadge = (impact: 'high' | 'medium' | 'low') => {
     switch (impact) {
@@ -100,7 +100,10 @@ export default function HabitTracker() {
                 <button
                   key={habit.id}
                   onClick={() => toggleHabitToday(habit.id)}
-                  className={`p-3 text-left rounded-xl border flex gap-3 transition-all ${
+                  role="checkbox"
+                  aria-checked={isChecked}
+                  aria-label={`Toggle habit: ${habit.name}`}
+                  className={`p-3 text-left rounded-xl border flex gap-3 transition-all focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none cursor-pointer ${
                     isChecked
                       ? 'border-emerald-500 bg-emerald-500/5 dark:bg-emerald-950/10 shadow-sm'
                       : 'border-border bg-card hover:bg-emerald-50/10 dark:hover:bg-emerald-950/2'

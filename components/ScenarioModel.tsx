@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useCarbonStore } from '../store/useCarbonStore';
 import { calculateCarbonDetails, formatCO2 } from '../utils/carbonCalculator';
 import { ScenarioProjectionChart } from './DashboardCharts';
-import { Sparkles, HelpCircle, Save, Info, RefreshCw } from 'lucide-react';
+import { Save, RefreshCw } from 'lucide-react';
+import { showToast } from './Toast';
 
 export default function ScenarioModel() {
   const { inputs, setInputs } = useCarbonStore();
@@ -139,7 +140,7 @@ export default function ScenarioModel() {
       dietType: newDiet,
     });
 
-    alert('Simulation applied! Your profile calculator inputs have been updated with these targets.');
+    showToast('Simulation applied! Your profile inputs have been updated.', 'success');
   };
 
   return (

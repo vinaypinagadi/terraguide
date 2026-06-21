@@ -2,7 +2,7 @@ import React from 'react';
 import { useCarbonStore } from '../store/useCarbonStore';
 import { calculateCarbonDetails, formatCO2, GLOBAL_AVERAGE_CO2 } from '../utils/carbonCalculator';
 import { CategoryDonutChart, ComparisonBarChart } from './DashboardCharts';
-import { AlertTriangle, TrendingDown, Award, Zap, ChevronRight, HelpCircle } from 'lucide-react';
+import { AlertTriangle, TrendingDown, Award, Zap, ChevronRight } from 'lucide-react';
 
 interface DashboardProps {
   onNavigate: (tab: string) => void;
@@ -166,7 +166,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
         </div>
         <button 
           onClick={() => onNavigate('tips')}
-          className="text-xs font-bold text-rose-600 dark:text-rose-400 hover:text-rose-700 hover:underline flex items-center gap-1 shrink-0 cursor-pointer self-end sm:self-center"
+          className="text-xs font-bold text-rose-600 dark:text-rose-400 hover:text-rose-700 hover:underline flex items-center gap-1 shrink-0 cursor-pointer self-end sm:self-center focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none rounded-lg p-1 transition-all"
         >
           View Recommendations <ChevronRight className="w-4 h-4" />
         </button>

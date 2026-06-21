@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useCarbonStore } from '../store/useCarbonStore';
-import { getRecommendationsForUser, ALL_RECOMMENDATIONS, Recommendation } from '../utils/recommendations';
+import { getRecommendationsForUser, ALL_RECOMMENDATIONS } from '../utils/recommendations';
 import { formatCO2 } from '../utils/carbonCalculator';
-import { Plus, Minus, Check, Leaf, ClipboardList, Lightbulb, CheckCircle2 } from 'lucide-react';
+import { Plus, Check, Leaf, ClipboardList, Lightbulb, CheckCircle2 } from 'lucide-react';
 
 export default function Recommendations() {
   const { 
@@ -48,7 +48,9 @@ export default function Recommendations() {
       <div className="flex border-b border-border">
         <button
           onClick={() => setActiveTab('explore')}
-          className={`pb-3 px-6 text-sm font-semibold flex items-center gap-2 border-b-2 cursor-pointer transition-all ${
+          role="tab"
+          aria-selected={activeTab === 'explore'}
+          className={`pb-3 px-6 text-sm font-semibold flex items-center gap-2 border-b-2 cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none rounded-t-lg transition-all ${
             activeTab === 'explore'
               ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold'
               : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -58,7 +60,9 @@ export default function Recommendations() {
         </button>
         <button
           onClick={() => setActiveTab('plan')}
-          className={`pb-3 px-6 text-sm font-semibold flex items-center gap-2 border-b-2 cursor-pointer transition-all relative ${
+          role="tab"
+          aria-selected={activeTab === 'plan'}
+          className={`pb-3 px-6 text-sm font-semibold flex items-center gap-2 border-b-2 cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none rounded-t-lg transition-all relative ${
             activeTab === 'plan'
               ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold'
               : 'border-transparent text-muted-foreground hover:text-foreground'

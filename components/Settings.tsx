@@ -1,7 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { useCarbonStore } from '../store/useCarbonStore';
-import { Download, Upload, Trash2, Database, ShieldAlert, Check, Leaf } from 'lucide-react';
+import { Download, Upload, Trash2, Database, ShieldAlert, Leaf } from 'lucide-react';
 import Preloader from './Preloader';
+import { showToast } from './Toast';
 
 export default function Settings() {
   const { inputs, habitsHistory, streakCount, badges, activeRecommendations, completedRecommendations, resetAllData, importData } = useCarbonStore();
@@ -50,14 +51,13 @@ export default function Settings() {
           setImporting(false);
           
           if (success) {
-            alert('Settings and progress data imported successfully!');
-            window.location.reload(); // Refresh to reload persisted states
+            showToast('Settings and progress data imported successfully!', 'success');
           } else {
-            alert('Failed to parse file. Please verify the JSON structure.');
+            showToast('Failed to parse file. Please verify the JSON structure.', 'error');
           }
         } catch {
           setImporting(false);
-          alert('Invalid file type. Please upload a valid JSON backup file.');
+          showToast('Invalid file type. Please upload a valid JSON backup file.', 'error');
         }
       }, 1200); // Simulate import loading animation
     };
@@ -73,8 +73,7 @@ export default function Settings() {
   const handleConfirmReset = () => {
     resetAllData();
     setShowResetConfirm(false);
-    alert('All calculations, history, streaks, and badges have been deleted.');
-    window.location.reload();
+    showToast('All calculations, history, streaks, and badges have been deleted.', 'success');
   };
 
   return (
@@ -129,7 +128,7 @@ export default function Settings() {
         <ul className="text-xs text-muted-foreground space-y-2 list-disc pl-5 leading-relaxed">
           <li><strong>Zero Tracking:</strong> No tracking cookies, no Google Analytics, no telemetry.</li>
           <li><strong>No Networking:</strong> The application does not issue any network requests after the first load. All calculations, recommendations, and chart drawings happen in-browser on the client side.</li>
-          <li><strong>Storage details:</strong> State is compiled and preserved inside your browser's persistent `localStorage` database under the key `terraguide-state`.</li>
+          <li><strong>Storage details:</strong> State is compiled and preserved inside your browser&apos;s persistent `localStorage` database under the key `terraguide-state`.</li>
         </ul>
       </div>
 

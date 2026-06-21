@@ -248,18 +248,83 @@ export const useCarbonStore = create<CarbonState>()(
 
       importData: (imported) => {
         try {
-          if (!imported.inputs) return false;
+          if (!imported || typeof imported !== 'object') return false;
           
+          const rawImport = imported as Record<string, unknown>;
+          if (!rawImport.inputs || typeof rawImport.inputs !== 'object') return false;
+          
+          const rawInputs = rawImport.inputs as Record<string, unknown>;
+          
+          // Explicitly clone allowed inputs to prevent prototype pollution and type issues
+          const cleanInputs: Record<string, string | number> = {};
+          const allowedKeys: (keyof CarbonInputs)[] = [
+            'electricityBill', 'heatingSource', 'heatingAmount', 'householdSize',
+            'carType', 'annualMileage', 'publicTransportHours', 'shortFlights', 'longFlights',
+            'dietType', 'foodWaste', 'localFoodRatio', 'shoppingSpend', 'recyclingHabits'
+          ];
+          
+          for (const key of allowedKeys) {
+            if (key in rawInputs) {
+              const val = rawInputs[key];
+              if (key === 'heatingSource') {
+                if (['gas', 'oil', 'electricity', 'none'].includes(val as string)) {
+                  cleanInputs[key] = val as string;
+                }
+              } else if (key === 'carType') {
+                if (['petrol', 'diesel', 'hybrid', 'electric', 'none'].includes(val as string)) {
+                  cleanInputs[key] = val as string;
+                }
+              } else if (key === 'dietType') {
+                if (['meat-heavy', 'average', 'low-meat', 'vegetarian', 'vegan'].includes(val as string)) {
+                  cleanInputs[key] = val as string;
+                }
+              } else if (key === 'foodWaste') {
+                if (['high', 'medium', 'low'].includes(val as string)) {
+                  cleanInputs[key] = val as string;
+                }
+              } else if (key === 'recyclingHabits') {
+                if (['none', 'some', 'detailed'].includes(val as string)) {
+                  cleanInputs[key] = val as string;
+                }
+              } else if (typeof val === 'number' && !isNaN(val)) {
+                cleanInputs[key] = val;
+              }
+            }
+          }
+          
+          // Check that we have a valid inputs object populated
+          if (Object.keys(cleanInputs).length === 0) return false;
+
+          // Safe arrays cloning
+          const cleanArray = (arr: unknown) => Array.isArray(arr) ? arr.filter((x): x is string => typeof x === 'string') : [];
+          
+          // Safe habitsHistory validation
+          const rawHistory = rawImport.habitsHistory;
+          const cleanHistory: HabitLog[] = [];
+          if (Array.isArray(rawHistory)) {
+            for (const log of rawHistory) {
+              if (log && typeof log === 'object' && 'date' in log && 'habits' in log) {
+                const logObj = log as Record<string, unknown>;
+                if (typeof logObj.date === 'string' && Array.isArray(logObj.habits)) {
+                  cleanHistory.push({
+                    date: logObj.date,
+                    habits: logObj.habits.filter((h): h is string => typeof h === 'string'),
+                  });
+                }
+              }
+            }
+          }
+
           set({
-            hasCalculated: imported.hasCalculated ?? true,
-            inputs: { ...initialInputs, ...imported.inputs },
-            habitsHistory: imported.habitsHistory ?? [],
-            completedHabitsToday: imported.completedHabitsToday ?? [],
-            streakCount: imported.streakCount ?? 0,
-            lastActiveDate: imported.lastActiveDate ?? null,
-            badges: imported.badges ?? [],
-            activeRecommendations: imported.activeRecommendations ?? [],
-            completedRecommendations: imported.completedRecommendations ?? [],
+            hasCalculated: typeof rawImport.hasCalculated === 'boolean' ? rawImport.hasCalculated : true,
+            inputs: { ...initialInputs, ...(cleanInputs as unknown as CarbonInputs) },
+            habitsHistory: cleanHistory,
+            completedHabitsToday: cleanArray(rawImport.completedHabitsToday),
+            streakCount: typeof rawImport.streakCount === 'number' ? rawImport.streakCount : 0,
+            lastActiveDate: typeof rawImport.lastActiveDate === 'string' ? rawImport.lastActiveDate : null,
+            badges: cleanArray(rawImport.badges),
+            activeRecommendations: cleanArray(rawImport.activeRecommendations),
+            completedRecommendations: cleanArray(rawImport.completedRecommendations),
           });
           
           // Re-evaluate streak after import
@@ -272,7 +337,15 @@ export const useCarbonStore = create<CarbonState>()(
     }),
     {
       name: 'terraguide-state',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => 
+        typeof window !== 'undefined' 
+          ? window.localStorage 
+          : (({
+              getItem: () => null,
+              setItem: () => {},
+              removeItem: () => {},
+            }) as unknown as Storage)
+      ),
     }
   )
 );

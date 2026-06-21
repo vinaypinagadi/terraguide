@@ -22,7 +22,18 @@ export function CategoryDonutChart({ data, total }: DonutProps) {
   const strokeWidth = 14;
   const circumference = 2 * Math.PI * radius; // ~314.16
 
-  let accumulatedPercentage = 0;
+  const segments = data.reduce<{
+    accumulated: number;
+    items: (ChartDataItem & { percentage: number; strokeLength: number; strokeOffset: number })[];
+  }>((acc, item) => {
+    const percentage = total > 0 ? item.value / total : 0;
+    const strokeLength = percentage * circumference;
+    const strokeOffset = circumference - (acc.accumulated * circumference);
+    return {
+      accumulated: acc.accumulated + percentage,
+      items: [...acc.items, { ...item, percentage, strokeLength, strokeOffset }]
+    };
+  }, { accumulated: 0, items: [] }).items;
 
   return (
     <div className="flex flex-col sm:flex-row items-center justify-center gap-6 p-4">
@@ -39,12 +50,7 @@ export function CategoryDonutChart({ data, total }: DonutProps) {
             strokeWidth={strokeWidth - 2}
           />
           
-          {data.map((item, idx) => {
-            const percentage = total > 0 ? item.value / total : 0;
-            const strokeLength = percentage * circumference;
-            const strokeOffset = circumference - (accumulatedPercentage * circumference);
-            accumulatedPercentage += percentage;
-
+          {segments.map((item, idx) => {
             const isHovered = hoveredIdx === idx;
             
             if (item.value === 0) return null;
@@ -58,8 +64,8 @@ export function CategoryDonutChart({ data, total }: DonutProps) {
                 fill="transparent"
                 stroke={item.color}
                 strokeWidth={isHovered ? strokeWidth + 2 : strokeWidth}
-                strokeDasharray={`${strokeLength} ${circumference}`}
-                strokeDashoffset={strokeOffset}
+                strokeDasharray={`${item.strokeLength} ${circumference}`}
+                strokeDashoffset={item.strokeOffset}
                 strokeLinecap="round"
                 className="transition-all duration-300 cursor-pointer"
                 onMouseEnter={() => setHoveredIdx(idx)}
